@@ -8,7 +8,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=for-the-badge&logo=docker)
 ![Swagger](https://img.shields.io/badge/Swagger-OAS3-85EA2D?style=for-the-badge&logo=swagger)
 
-Bu proje, yüksek eşzamanlılık (High Concurrency) gerektiren bilet satış senaryoları için tasarlanmış, Olay Tabanlı (Event-Driven) bildirim mimarisine sahip kapsamlı bir **Backend API** sistemidir. 
+Bu proje, eşzamanlı bilet satış senaryolarını güvenli şekilde yönetmek için tasarlanmış, bildirimleri uygulama içindeki servis entegrasyonu üzerinden oluşturan kapsamlı bir **Backend API** sistemidir.
 
 Standart CRUD işlemlerinin ötesine geçerek; **Veri tutarlılığı**, **Dinamik fiyatlandırma algoritmaları** ve **Gelişmiş JWT Güvenliği** gibi modern yazılım mühendisliği pratiklerini barındırır.
 
@@ -18,7 +18,7 @@ Standart CRUD işlemlerinin ötesine geçerek; **Veri tutarlılığı**, **Dinam
 
 - **Eşzamanlılık Kontrolü (Pessimistic Lock):** Aynı anda bilet almak isteyen kullanıcılar arasında "Race Condition" oluşmaması için veritabanı seviyesinde `Pessimistic Lock` kullanılmış, aynı koltuğun iki kişiye satılması engellenmiştir.
 - **Tasarım Kalıpları (Strategy Pattern):** Etkinliklerdeki doluluk oranına göre fiyatı dinamik olarak artıran algoritma (`OccupancyBasedPricingStrategy`), if-else bloklarına boğulmadan **Strategy Design Pattern** ile izole edilmiştir.
-- **Entegre Bildirim Sistemi (Integrated Notifications):** Sistemdeki "Favoriler" modülü sadece bir listeleme aracı değildir. Etkinlik fiyatı arttığında veya bir etkinlik "Tükendi" (`SOLD_OUT`) durumuna geçtiğinde favoriye alan kullanıcılara, bilet iptal edildiğinde ise bilet sahiplerine ilgili servisler arası entegrasyonla (Service-to-Service) otomatik arka plan bildirimi (Notification) gider.
+- **Entegre Bildirim Sistemi (Integrated Notifications):** Sistemdeki "Favoriler" modülü sadece bir listeleme aracı değildir. Etkinlik fiyatı veya tarihi değiştiğinde, etkinlik iptal edildiğinde ya da durum değiştiğinde favoriye alan kullanıcılara ve gerektiğinde bilet sahiplerine, ilgili servislerin doğrudan çağrılmasıyla veritabanına bildirim kaydı oluşturulur.
 - **Gelişmiş JWT Güvenliği (Token Blacklist):** Çıkış yapan veya şifresi sıfırlanan kullanıcıların token'ları **Kara Listeye** alınır. İptal edilmiş tokenlarla erişim kalıcı olarak kesilir.
 - **Performans Optimizasyonu (N+1 Problemi):** Binlerce bileti/bildirimi olan kullanıcılara ait listelemelerde ORM darboğazlarını önlemek için repository katmanında `JOIN FETCH` optimizasyonları yapılmıştır.
 
