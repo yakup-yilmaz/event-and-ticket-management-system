@@ -130,7 +130,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public void cancelTicket(Long ticketId) {
-        Ticket ticket = ticketRepository.findByIdWithDetails(ticketId)
+        Ticket ticket = ticketRepository.findByIdWithLock(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bilet bulunamadi ID: " + ticketId));
 
         assertTicketAccess(ticket.getUser().getId());
@@ -142,6 +142,11 @@ public class TicketServiceImpl implements TicketService {
 
         Event event = eventRepository.findByIdWithLock(ticket.getEvent().getId())
                 .orElseThrow(() -> new BusinessException("EVENT_NOT_FOUND", "Etkinlik bulunamadı"));
+
+        if (ticket.getStatus() == TicketStatus.CANCELLED) {
+            log.info("Bilet kilit sonrası iptal edilmiş görüldü (idempotent). Ticket ID: {}", ticketId);
+            return;
+        }
 
         if (event.getStatus() == EventStatus.CANCELLED) {
             throw new BusinessException("EVENT_CANCELLED", "İptal edilmiş etkinlikte bilet iptali yapılamaz!");
@@ -156,8 +161,11 @@ public class TicketServiceImpl implements TicketService {
         ticket.setSeatNumber(ticket.getSeatNumber() + "-CANCELLED-" + ticket.getId());
         ticketRepository.save(ticket);
 
+        // Kapasite artırımı: Sınır kontrolü ile asla totalSeats aşılmayacak şekilde artırılır
+        if (event.getAvailableSeats() < event.getTotalSeats()) {
+            event.setAvailableSeats(event.getAvailableSeats() + 1);
+        }
 
-        event.setAvailableSeats(event.getAvailableSeats() + 1);
         boolean stockBecameAvailable = event.getStatus() == EventStatus.SOLD_OUT;
         if (event.getStatus() == EventStatus.SOLD_OUT) {
             event.setStatus(EventStatus.ACTIVE);
