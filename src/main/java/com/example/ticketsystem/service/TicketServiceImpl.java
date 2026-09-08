@@ -136,7 +136,8 @@ public class TicketServiceImpl implements TicketService {
         assertTicketAccess(ticket.getUser().getId());
 
         if (ticket.getStatus() == TicketStatus.CANCELLED) {
-            throw new BusinessException("TICKET_ALREADY_CANCELLED", "Bu bilet zaten iptal edilmis!");
+            log.info("Bilet zaten iptal edilmiş durumda (idempotent). Ticket ID: {}", ticketId);
+            return;
         }
 
         Event event = eventRepository.findByIdWithLock(ticket.getEvent().getId())

@@ -30,6 +30,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
     ) throws IOException {
         ErrorResponse body = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
+                .code("UNAUTHORIZED")
                 .message("Kimlik doğrulama gerekli veya token geçersiz")
                 .timestamp(LocalDateTime.now())
                 .build();

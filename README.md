@@ -86,35 +86,54 @@ Tüm API uç noktaları Swagger arayüzü üzerinden interaktif olarak test edil
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/auth/register` | Sisteme yeni kullanıcı kaydeder. |
 | `POST` | `/api/v1/auth/login` | Giriş yapar. Access ve Refresh Token döner. |
-| `POST` | `/api/v1/auth/refresh` | Süresi dolan Access token'ı yeniler. |
+| `POST` | `/api/v1/auth/refresh` | Süresi dolan Access token'ı yeniler (Refresh Token Rotation). |
 | `POST` | `/api/v1/auth/logout` | Token'ı kara listeye alarak güvenli çıkış yapar. |
 
 ### 🎭 Etkinlikler (Events)
 | Metot | Uç Nokta | Açıklama |
 | :--- | :--- | :--- |
+| `GET` | `/api/v1/events` | Tüm etkinlikleri listeler. |
 | `GET` | `/api/v1/events/active` | Satışa açık olan etkinlikleri listeler. |
+| `GET` | `/api/v1/events/{id}` | Etkinlik detayını getirir. |
+| `GET` | `/api/v1/events/status/{status}` | Durumuna göre etkinlikleri filtreler (`ACTIVE`, `SOLD_OUT`, `CANCELLED`, `PASSED`). |
+| `GET` | `/api/v1/events/search?keyword=...` | İsme göre etkinlik arar. |
 | `POST` | `/api/v1/events` | **(ADMIN)** Yeni bir etkinlik ekler (Dinamik/Sabit fiyat). |
-| `PUT` | `/api/v1/events/{id}` | **(ADMIN)** Etkinlik detaylarını günceller. |
+| `PUT` | `/api/v1/events/{id}` | **(ADMIN)** Etkinlik detaylarını tam günceller. |
+| `PATCH` | `/api/v1/events/{id}` | **(ADMIN)** Etkinlik detaylarını kısmi günceller. |
+| `DELETE`| `/api/v1/events/{id}` | **(ADMIN)** Etkinliği siler. |
 
 ### 🎫 Biletler (Tickets)
 | Metot | Uç Nokta | Açıklama |
 | :--- | :--- | :--- |
-| `POST` | `/api/v1/tickets/buy` | Etkinliğe bilet alır (Otomatik Sıralı Koltuk Ataması). |
-| `POST` | `/api/v1/tickets/{id}/cancel` | Bileti iptal eder ve koltuğu sisteme iade eder. |
+| `POST` | `/api/v1/tickets/buy` | Etkinliğe bilet alır (Pessimistic Lock & Otomatik Sıralı Koltuk Ataması). |
+| `POST` | `/api/v1/tickets/{id}/cancel` | Bileti iptal eder ve koltuğu sisteme iade eder (Idempotent). |
 | `GET` | `/api/v1/tickets/my` | Kullanıcının satın aldığı tüm biletleri listeler (Alias: `/my-tickets`). |
+| `GET` | `/api/v1/tickets/{id}` | Bilet detayını getirir (Bilet sahibi veya ADMIN). |
+| `GET` | `/api/v1/tickets/user/{userId}` | **(ADMIN)** Belirli bir kullanıcının biletlerini listeler. |
 
 ### ❤️ Favoriler (Favorites)
 | Metot | Uç Nokta | Açıklama |
 | :--- | :--- | :--- |
-| `POST` | `/api/v1/favorites/{eventId}` | Etkinliği favorilere ekler (Tükendiğinde bildirim almak için). |
+| `POST` | `/api/v1/favorites/{eventId}` | Etkinliği favorilere ekler (Tükendiğinde/fiyat değiştiğinde bildirim almak için). |
 | `DELETE`| `/api/v1/favorites/{eventId}` | Etkinliği favorilerden çıkarır. |
 | `GET` | `/api/v1/favorites` | Kullanıcının favori listesini getirir. |
+| `GET` | `/api/v1/favorites/{eventId}/check` | Etkinliğin favorilerde olup olmadığını kontrol eder. |
 
 ### 🔔 Bildirimler (Notifications)
 | Metot | Uç Nokta | Açıklama |
 | :--- | :--- | :--- |
+| `GET` | `/api/v1/notifications` | Kullanıcının tüm bildirimlerini sayfalı listeler (`size` sınırı: 50). |
 | `GET` | `/api/v1/notifications/unread` | Okunmamış sistem bildirimlerini listeler. |
+| `GET` | `/api/v1/notifications/unread-count` | Okunmamış bildirim adedini döner. |
 | `POST` | `/api/v1/notifications/{id}/read` | Bildirimi "okundu" olarak işaretler. |
 | `POST` | `/api/v1/notifications/read-all`| Tüm bildirimleri tek tıkla okundu yapar. |
+
+### 👤 Kullanıcılar (Users)
+| Metot | Uç Nokta | Açıklama |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/users/me` | Giriş yapmış kullanıcının profil detaylarını getirir. |
+| `PUT` | `/api/v1/users/me` | Giriş yapmış kullanıcının profil bilgilerini günceller. |
+| `GET` | `/api/v1/users` | **(ADMIN)** Sistemdeki tüm kullanıcıları listeler. |
+| `GET` | `/api/v1/users/{id}` | **(ADMIN)** Kullanıcı detayını getirir. |
 
 ---

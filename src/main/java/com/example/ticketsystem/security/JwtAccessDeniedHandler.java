@@ -30,6 +30,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
     ) throws IOException {
         ErrorResponse body = ErrorResponse.builder()
                 .status(HttpStatus.FORBIDDEN.value())
+                .code("ACCESS_DENIED")
                 .message("Bu işlem için yetkiniz yok")
                 .timestamp(LocalDateTime.now())
                 .build();

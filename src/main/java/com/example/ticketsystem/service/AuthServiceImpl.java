@@ -125,7 +125,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void logout(String accessToken, String refreshToken) {
         if (accessToken == null || accessToken.isBlank()) {
-            throw new BusinessException("Access token gerekli");
+            throw new BusinessException("ACCESS_TOKEN_REQUIRED", "Access token gerekli");
         }
 
         String raw = accessToken.startsWith("Bearer ")
@@ -142,7 +142,7 @@ public class AuthServiceImpl implements AuthService {
             jti = ex.getClaims().getId();
             expiresAt = ex.getClaims().getExpiration().toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
         } catch (Exception ex) {
-            throw new BusinessException("Geçersiz access token");
+            throw new BusinessException("INVALID_ACCESS_TOKEN", "Geçersiz access token");
         }
 
         if (jti != null && expiresAt != null) {
@@ -162,6 +162,12 @@ public class AuthServiceImpl implements AuthService {
         if (refreshToken != null && !refreshToken.isBlank()) {
             String tokenHash = hashToken(refreshToken);
             refreshTokenRepository.findByTokenHash(tokenHash).ifPresent(stored -> {
+                Long currentUserId = com.example.ticketsystem.security.SecurityUtils.getCurrentUserId();
+                if (!stored.getUser().getId().equals(currentUserId)) {
+                    log.warn("Yetkisiz refresh token logout denemesi! CurrentUser: {}, TokenOwner: {}",
+                            currentUserId, stored.getUser().getId());
+                    throw new BusinessException("ACCESS_DENIED", "Başkasına ait refresh token iptal edilemez!");
+                }
                 stored.setRevoked(true);
                 stored.setRevokedAt(LocalDateTime.now());
                 refreshTokenRepository.save(stored);
