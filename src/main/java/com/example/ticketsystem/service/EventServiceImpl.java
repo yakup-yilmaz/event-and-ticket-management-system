@@ -274,8 +274,10 @@ public class EventServiceImpl implements EventService {
         List<com.example.ticketsystem.entity.Ticket> activeTickets =
                 ticketRepository.findByEventIdAndStatus(
                         event.getId(), com.example.ticketsystem.entity.TicketStatus.PURCHASED);
-        activeTickets.forEach(ticket -> ticket.setStatus(
-                com.example.ticketsystem.entity.TicketStatus.CANCELLED));
+        activeTickets.forEach(ticket -> {
+            ticket.setStatus(com.example.ticketsystem.entity.TicketStatus.CANCELLED);
+            ticket.setSeatNumber(ticket.getSeatNumber() + "-CANCELLED-" + ticket.getId());
+        });
         if (!activeTickets.isEmpty()) {
             ticketRepository.saveAll(activeTickets);
         }

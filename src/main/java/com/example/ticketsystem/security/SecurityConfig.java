@@ -51,11 +51,11 @@ public class SecurityConfig {
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/auth/logout",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
+                        .requestMatchers("/api/v1/auth/logout").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
                         // /me önce tanımlanmalı; aksi halde users/** ADMIN kuralı engeller
                         .requestMatchers("/api/v1/users/me").authenticated()

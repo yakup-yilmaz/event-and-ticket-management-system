@@ -40,7 +40,12 @@ Standart CRUD işlemlerinin ötesine geçerek; **Veri tutarlılığı**, **Dinam
 ```bash
 git clone https://github.com/KULLANICI_ADINIZ/ticketsystem.git
 cd ticketsystem
+
+# Linux / macOS:
 cp .env.example .env
+
+# Windows (PowerShell):
+Copy-Item .env.example .env
 ```
 > **Önemli Güvenlik Notu:** Production ortamına çıkarken `.env` dosyasındaki `JWT_SECRET`, `ADMIN_PASSWORD` ve veritabanı şifrelerini güçlü ve benzersiz değerlerle değiştirin.
 

@@ -4,7 +4,10 @@ param(
 )
 
 if (-not $AdminEmail) { $AdminEmail = "admin@ticketsystem.local" }
-if (-not $AdminPassword) { $AdminPassword = "ChangeMe123!" }
+if (-not $AdminPassword) {
+    Write-Error "AdminPassword parametresi veya ADMIN_PASSWORD ortam degiskeni belirtilmelidir! Ornek: .\test_api.ps1 -AdminPassword 'Sifreniz'"
+    exit 1
+}
 
 $ErrorActionPreference = "Stop"
 

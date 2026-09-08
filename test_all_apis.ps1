@@ -4,7 +4,10 @@ param(
 )
 
 if (-not $AdminEmail) { $AdminEmail = "admin@ticketsystem.local" }
-if (-not $AdminPassword) { $AdminPassword = "ChangeMe123!" }
+if (-not $AdminPassword) {
+    Write-Error "AdminPassword parametresi veya ADMIN_PASSWORD ortam degiskeni belirtilmelidir! Ornek: .\test_all_apis.ps1 -AdminPassword 'Sifreniz'"
+    exit 1
+}
 
 $ErrorActionPreference = "Stop"
 
@@ -58,7 +61,7 @@ $null = Test-Endpoint -Name "GET Event By Status" -Method GET -Uri "/api/v1/even
 $null = Test-Endpoint -Name "GET Event Search" -Method GET -Uri "/api/v1/events/search?keyword=Full"
 $null = Test-Endpoint -Name "GET Event By Id" -Method GET -Uri "/api/v1/events/$eventId"
 
-$updateBody = @{ name="Updated Event $uid"; description="Desc 2"; totalSeats=100; basePrice=150.00; eventDate=(Get-Date).AddDays(10).ToString("yyyy-MM-ddTHH:mm:ss"); status="ACTIVE" }
+$updateBody = @{ name="Updated Event $uid"; description="Desc 2"; totalSeats=50; basePrice=150.00; eventDate=(Get-Date).AddDays(10).ToString("yyyy-MM-ddTHH:mm:ss"); status="ACTIVE"; pricingType="STANDARD" }
 $null = Test-Endpoint -Name "PUT Event (Admin)" -Method PUT -Uri "/api/v1/events/$eventId" -Body $updateBody -Token $adminToken
 $null = Test-Endpoint -Name "PATCH Event (Admin)" -Method PATCH -Uri "/api/v1/events/$eventId" -Body @{ basePrice=200.00 } -Token $adminToken
 
