@@ -52,13 +52,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public UserResponse register(UserCreateRequest request) {
-        log.info("Kayıt isteği. Email: {}", request.getEmail());
+        String normalizedEmail = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+        log.info("Kayıt isteği alındı");
 
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new BusinessException("Bu email adresi ile kayitli bir kullanici zaten var!");
         }
 
         User user = userMapper.toEntity(request);
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
 
@@ -70,11 +72,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(normalizedEmail, request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new BusinessException("Geçersiz kimlik bilgileri"));
 
         // Süresi dolmuş refresh kayıtlarını temizle (geçerli olanlara dokunulmaz)

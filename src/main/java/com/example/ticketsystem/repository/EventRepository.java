@@ -35,6 +35,8 @@ public interface EventRepository extends JpaRepository<Event, Long>
     
     boolean existsByNameAndEventDate(String name, java.time.LocalDateTime eventDate);
     
+    boolean existsByNameAndEventDateAndIdNot(String name, java.time.LocalDateTime eventDate, Long id);
+    
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT e FROM Event e WHERE e.id=:id")
     Optional<Event> findByIdWithLock(@Param("id") Long id);

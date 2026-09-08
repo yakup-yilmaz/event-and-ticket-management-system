@@ -33,7 +33,7 @@ public class TicketController {
         return new ResponseEntity<>(ticketService.buyTicket(request), HttpStatus.CREATED);
     }
 
-    @GetMapping("/my")
+    @GetMapping({"/my", "/my-tickets"})
     public ResponseEntity<List<TicketResponse>> getMyTickets() {
         log.info("REST: Kendi biletlerim (/my)");
         return ResponseEntity.ok(ticketService.getMyTickets());

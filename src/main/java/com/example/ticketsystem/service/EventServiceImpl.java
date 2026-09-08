@@ -129,10 +129,20 @@ public class EventServiceImpl implements EventService {
     public EventResponse updateEvent(Long id, EventUpdateRequest request) {
         log.info("Etkinlik tam guncelleme (PUT) istegi alindi. Event ID: {}", id);
 
-        Event event = eventRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Etkinlik bulunamadi ID: " + id));
-
         validateFullUpdate(request);
+
+        if (!request.getEventDate().isAfter(LocalDateTime.now())) {
+            throw new com.example.ticketsystem.exception.BusinessException(
+                    "Etkinlik tarihi gelecekte olmalıdır");
+        }
+
+        if (eventRepository.existsByNameAndEventDateAndIdNot(request.getName(), request.getEventDate(), id)) {
+            throw new com.example.ticketsystem.exception.BusinessException(
+                    "Aynı isim ve tarihte başka bir etkinlik zaten mevcut");
+        }
+
+        Event event = eventRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Etkinlik bulunamadi ID: " + id));
 
         Snapshot before = Snapshot.from(event);
 
@@ -167,8 +177,16 @@ public class EventServiceImpl implements EventService {
                     "PATCH isteğinde en az bir alan belirtilmelidir");
         }
 
-        Event event = eventRepository.findById(id)
+        Event event = eventRepository.findByIdWithLock(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Etkinlik bulunamadi ID: " + id));
+
+        String targetName = request.getName() != null ? request.getName() : event.getName();
+        LocalDateTime targetDate = request.getEventDate() != null ? request.getEventDate() : event.getEventDate();
+        if ((request.getName() != null || request.getEventDate() != null)
+                && eventRepository.existsByNameAndEventDateAndIdNot(targetName, targetDate, id)) {
+            throw new com.example.ticketsystem.exception.BusinessException(
+                    "Aynı isim ve tarihte başka bir etkinlik zaten mevcut");
+        }
 
         Snapshot before = Snapshot.from(event);
 
@@ -235,7 +253,7 @@ public class EventServiceImpl implements EventService {
             notificationService.notifyFavoritersAndTicketHolders(
                 after,
                 NotificationType.EVENT_CANCELLED,
-                String.format("'%s' etkinliği iptal edildi. Bilet iadesi yapılacaktır.", after.getName())
+                String.format("'%s' etkinliği iptal edildi. Biletleriniz iptal edilmiştir; iade işlemleri için lütfen iletişime geçiniz.", after.getName())
             );
             } else {
                 notificationService.notifyFavoriters(

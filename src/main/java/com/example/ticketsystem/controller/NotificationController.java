@@ -28,13 +28,15 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
+    private static final int MAX_PAGE_SIZE = 50;
+
     @GetMapping
     public ResponseEntity<Page<NotificationResponse>> getMyNotifications(
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable
     ) {
         log.info("REST: Bildirimlerim");
-        return ResponseEntity.ok(notificationService.getMyNotifications(pageable));
+        return ResponseEntity.ok(notificationService.getMyNotifications(clampPageable(pageable)));
     }
 
     @GetMapping("/unread")
@@ -43,7 +45,14 @@ public class NotificationController {
             Pageable pageable
     ) {
         log.info("REST: Okunmamış bildirimler");
-        return ResponseEntity.ok(notificationService.getMyUnreadNotifications(pageable));
+        return ResponseEntity.ok(notificationService.getMyUnreadNotifications(clampPageable(pageable)));
+    }
+
+    private Pageable clampPageable(Pageable pageable) {
+        if (pageable.getPageSize() > MAX_PAGE_SIZE) {
+            return org.springframework.data.domain.PageRequest.of(pageable.getPageNumber(), MAX_PAGE_SIZE, pageable.getSort());
+        }
+        return pageable;
     }
 
     @GetMapping("/unread-count")

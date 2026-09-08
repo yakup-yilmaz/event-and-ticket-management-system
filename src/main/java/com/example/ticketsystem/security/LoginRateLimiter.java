@@ -18,17 +18,31 @@ public class LoginRateLimiter {
 
     public void check(String clientKey) {
         Instant now = Instant.now();
-        AttemptWindow window = attempts.compute(clientKey, (key, current) -> {
+        AttemptWindow window = attempts.get(clientKey);
+        if (window != null) {
+            if (Duration.between(window.startedAt(), now).compareTo(WINDOW) < 0) {
+                if (window.count() >= MAX_ATTEMPTS) {
+                    throw new TooManyRequestsException(
+                            "Çok fazla başarısız giriş denemesi. Lütfen bir dakika sonra tekrar deneyin");
+                }
+            } else {
+                attempts.remove(clientKey);
+            }
+        }
+    }
+
+    public void recordFailure(String clientKey) {
+        Instant now = Instant.now();
+        attempts.compute(clientKey, (key, current) -> {
             if (current == null || Duration.between(current.startedAt(), now).compareTo(WINDOW) >= 0) {
                 return new AttemptWindow(now, 1);
             }
             return new AttemptWindow(current.startedAt(), current.count() + 1);
         });
+    }
 
-        if (window.count() > MAX_ATTEMPTS) {
-                throw new TooManyRequestsException(
-                    "Çok fazla giriş denemesi. Lütfen bir dakika sonra tekrar deneyin");
-        }
+    public void reset(String clientKey) {
+        attempts.remove(clientKey);
     }
 
     @Scheduled(fixedDelay = 300000)

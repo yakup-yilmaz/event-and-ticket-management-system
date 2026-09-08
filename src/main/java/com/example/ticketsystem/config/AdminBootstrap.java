@@ -25,20 +25,24 @@ public class AdminBootstrap implements ApplicationRunner {
     @Value("${app.admin.email:admin@ticketsystem.local}")
     private String adminEmail;
 
-    @Value("${app.admin.password:ChangeMe123!}")
+    @Value("${app.admin.password:}")
     private String adminPassword;
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!userRepository.existsByEmail(adminEmail)) {
+        String normalizedEmail = adminEmail != null ? adminEmail.trim().toLowerCase(java.util.Locale.ROOT) : "";
+        if (!userRepository.existsByEmail(normalizedEmail)) {
+            if (adminPassword == null || adminPassword.isBlank()) {
+                throw new IllegalStateException("Uygulama güvenliği için ADMIN_PASSWORD tanımlanmalıdır! Boş veya varsayılan parola kabul edilmez.");
+            }
             userRepository.save(User.builder()
                     .firstName("System")
                     .lastName("Admin")
-                    .email(adminEmail)
+                    .email(normalizedEmail)
                     .password(passwordEncoder.encode(adminPassword))
                     .role(Role.ADMIN)
                     .build());
-            log.info("Varsayılan ADMIN oluşturuldu: {}", adminEmail);
+            log.info("Varsayılan ADMIN oluşturuldu: {}", normalizedEmail);
         }
     }
 }

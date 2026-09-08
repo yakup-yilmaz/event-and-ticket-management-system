@@ -2,12 +2,13 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: ticketsystem-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ticketSystem
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - ticketsystem-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -21,6 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ticketsystem-app
+    restart: unless-stopped
     environment:
       DB_URL: jdbc:postgresql://postgres:5432/ticketSystem
       DB_USERNAME: ${DB_USERNAME}

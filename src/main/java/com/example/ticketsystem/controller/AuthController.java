@@ -33,7 +33,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody UserCreateRequest request) {
-        log.info("REST: Kayıt. Email: {}", request.getEmail());
+        log.info("REST: Kayıt. Email: {}", maskEmail(request.getEmail()));
         return new ResponseEntity<>(authService.register(request), HttpStatus.CREATED);
     }
 
@@ -42,9 +42,17 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest
     ) {
-        log.info("REST: Giriş. Email: {}", request.getEmail());
-        loginRateLimiter.check(httpRequest.getRemoteAddr());
-        return ResponseEntity.ok(authService.login(request));
+        String clientIp = httpRequest.getRemoteAddr();
+        log.info("REST: Giriş denemesi. Email: {}", maskEmail(request.getEmail()));
+        loginRateLimiter.check(clientIp);
+        try {
+            AuthResponse response = authService.login(request);
+            loginRateLimiter.reset(clientIp);
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            loginRateLimiter.recordFailure(clientIp);
+            throw ex;
+        }
     }
 
     @PostMapping("/refresh")
@@ -64,5 +72,18 @@ public class AuthController {
         return ResponseEntity.ok(MessageResponse.builder()
             .message("Çıkış başarılı. Tokenlar geçersiz kılındı.")
                 .build());
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "***";
+        }
+        int atIndex = email.indexOf('@');
+        String name = email.substring(0, atIndex);
+        String domain = email.substring(atIndex);
+        if (name.length() <= 2) {
+            return name.charAt(0) + "***" + domain;
+        }
+        return name.substring(0, 2) + "***" + domain;
     }
 }

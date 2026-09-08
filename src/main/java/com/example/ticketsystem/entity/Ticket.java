@@ -35,7 +35,8 @@ import lombok.NoArgsConstructor;
             @Index(name = "idx_ticket_user", columnList = "user_id"),
             @Index(name = "idx_ticket_event", columnList = "event_id"),
             @Index(name = "idx_ticket_code", columnList = "ticket_code"),
-            @Index(name = "idx_ticket_event_status", columnList = "event_id,status")
+            @Index(name = "idx_ticket_event_status", columnList = "event_id,status"),
+            @Index(name = "idx_ticket_event_seat_status", columnList = "event_id,seat_number,status")
         })
 public class Ticket {
 

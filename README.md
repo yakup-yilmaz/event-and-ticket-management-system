@@ -80,7 +80,7 @@ Tüm API uç noktaları Swagger arayüzü üzerinden interaktif olarak test edil
 | :--- | :--- | :--- |
 | `POST` | `/api/v1/tickets/buy` | Etkinliğe bilet alır (Otomatik Sıralı Koltuk Ataması). |
 | `POST` | `/api/v1/tickets/{id}/cancel` | Bileti iptal eder ve koltuğu sisteme iade eder. |
-| `GET` | `/api/v1/tickets/my-tickets` | Kullanıcının satın aldığı tüm biletleri listeler. |
+| `GET` | `/api/v1/tickets/my` | Kullanıcının satın aldığı tüm biletleri listeler (Alias: `/my-tickets`). |
 
 ### ❤️ Favoriler (Favorites)
 | Metot | Uç Nokta | Açıklama |
