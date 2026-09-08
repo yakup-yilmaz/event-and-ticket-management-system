@@ -22,6 +22,70 @@ Standart CRUD işlemlerinin ötesine geçerek; **Veri tutarlılığı**, **Dinam
 - **Gelişmiş JWT Güvenliği (Token Blacklist):** Çıkış yapan veya şifresi sıfırlanan kullanıcıların token'ları **Kara Listeye** alınır. İptal edilmiş tokenlarla erişim kalıcı olarak kesilir.
 - **Performans Optimizasyonu (N+1 Problemi):** Binlerce bileti/bildirimi olan kullanıcılara ait listelemelerde ORM darboğazlarını önlemek için repository katmanında `JOIN FETCH` optimizasyonları yapılmıştır.
 
+### 📊 Veritabanı İlişki Şeması (Entity Relationship Diagram)
+
+```mermaid
+erDiagram
+    USERS ||--o{ TICKETS : "satın alır"
+    USERS ||--o{ FAVORITES : "favoriler"
+    USERS ||--o{ NOTIFICATIONS : "alır"
+    USERS ||--o{ REFRESH_TOKENS : "sahiptir"
+    EVENTS ||--o{ TICKETS : "içerir"
+    EVENTS ||--o{ FAVORITES : "eklenir"
+    EVENTS ||--o{ NOTIFICATIONS : "tetikler"
+
+    USERS {
+        bigint id PK
+        string email UK
+        string password
+        string role "USER, ADMIN"
+    }
+
+    EVENTS {
+        bigint id PK
+        string name
+        int total_seats
+        int available_seats
+        decimal base_price
+        timestamp event_date
+        string status "ACTIVE, SOLD_OUT, CANCELLED, PASSED"
+        string pricing_type "STANDARD, OCCUPANCY_BASED"
+    }
+
+    TICKETS {
+        bigint id PK
+        string ticket_code UK
+        string seat_number "uk_ticket_event_seat"
+        decimal price_paid
+        string status "PURCHASED, CANCELLED"
+    }
+
+    FAVORITES {
+        bigint id PK
+        timestamp created_at
+    }
+
+    NOTIFICATIONS {
+        bigint id PK
+        string type "PRICE_CHANGED, STOCK_AVAILABLE, etc."
+        string message
+        boolean read_flag
+    }
+
+    REFRESH_TOKENS {
+        bigint id PK
+        string token_hash UK
+        timestamp expires_at
+        boolean revoked
+    }
+
+    TOKEN_BLACKLIST {
+        bigint id PK
+        string jti UK
+        timestamp expires_at
+    }
+```
+
 ---
 
 ## 🛠️ Kullanılan Teknolojiler
@@ -76,6 +140,17 @@ docker compose up -d postgres
 ### 3. API Dokümantasyonu (Swagger)
 Proje başarıyla başladığında **Swagger API Dokümantasyonuna** şu adresten ulaşabilirsiniz:
 👉 **[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)**
+
+---
+
+### 4. Otomatik Canlı Test Paketi (Automated API Test Suite)
+Sistem çalışırken tüm 26 REST endpoint'ini (Authentication, Event Lifecycle, Pessimistic Lock, Bilet Satın Alma/İptal, Bildirimler ve Temizlik) tek bir PowerShell komutuyla otomatik olarak test edebilirsiniz:
+
+```powershell
+# Windows PowerShell:
+powershell -ExecutionPolicy Bypass -File .\test_all_apis.ps1 -AdminPassword 'ChangeMe123!'
+```
+> Script sırasıyla; Admin ve User oturum açma, profil güncelleme, etkinlik CRUD, dinamik fiyatlandırma, bilet alma (sıralı koltuk atama), bilet iptal (koltuk iadesi), favorileme ve bildirim akışlarını test eder.
 
 ---
 
@@ -139,3 +214,24 @@ Tüm API uç noktaları Swagger arayüzü üzerinden interaktif olarak test edil
 | `GET` | `/api/v1/users/{id}` | **(ADMIN)** Kullanıcı detayını getirir. |
 
 ---
+
+## ⚖️ İş Kuralları ve Güvenlik Standartları (Business Rules)
+
+- **📈 Dinamik Fiyatlandırma Algoritması (`OccupancyBasedPricingStrategy`):**
+  - Doluluk Oranı $\ge \%80$ ise: $\text{Taban Fiyat} \times 1.50$
+  - Doluluk Oranı $\ge \%50$ ise: $\text{Taban Fiyat} \times 1.20$
+  - Doluluk Oranı $<\%50$ ise: $\text{Taban Fiyat}$ (Standart)
+- **🔒 Eşzamanlı Bilet Satışı ve İptali:**
+  - Bilet alımı esnasında `Event` kaydı `PESSIMISTIC_WRITE` ile kilitlenir, koltuk ataması otomatik yapılır (`KOLTUK-1`, `KOLTUK-2` ...).
+  - Bilet iptali esnasında **Double-Check Lock** paterniyle hem `Ticket` hem de `Event` kilitlenir; iptal edilen koltuk numarası `-CANCELLED-{id}` son eki alarak serbest bırakılır ve kapasite güvenle $+1$ artırılır.
+- **🕒 Zamanlanmış Arka Plan Görevleri (Scheduled Jobs):**
+  - **`EventStatusJob`:** Her 60 saniyede bir çalışarak etkinlik tarihi geçmiş `ACTIVE` veya `SOLD_OUT` etkinlikleri otomatik olarak `PASSED` durumuna çeker. Satın alınmış biletler kullanıcı geçmişi ve kanıt amacıyla `PURCHASED` durumunda güvenle saklanır.
+  - **`TokenCleanupJob`:** Her gece 03:00'da çalışarak süresi dolmuş refresh token kayıtlarını ve kara listedeki süresi bitmiş access tokenları temizler.
+
+---
+
+## 👨‍💻 Geliştirici & Lisans
+
+Bu proje **Yakup Yılmaz** tarafından modern yazılım mühendisliği prensipleri ve en iyi backend pratikleri uygulanarak geliştirilmiştir.  
+Lisans: [MIT License](LICENSE)
+
