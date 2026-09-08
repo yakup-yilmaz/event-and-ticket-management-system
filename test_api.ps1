@@ -1,3 +1,11 @@
+param(
+    [string]$AdminEmail = $env:ADMIN_EMAIL,
+    [string]$AdminPassword = $env:ADMIN_PASSWORD
+)
+
+if (-not $AdminEmail) { $AdminEmail = "admin@ticketsystem.local" }
+if (-not $AdminPassword) { $AdminPassword = "ChangeMe123!" }
+
 $ErrorActionPreference = "Stop"
 
 function Test-Endpoint {
@@ -31,7 +39,7 @@ function Test-Endpoint {
 }
 
 # 1. Admin Login
-$adminLogin = Test-Endpoint -Name "Admin Login" -Method POST -Uri "/api/v1/auth/login" -Body @{ email="admin@ticketsystem.local"; password="ChangeMe123!" }
+$adminLogin = Test-Endpoint -Name "Admin Login" -Method POST -Uri "/api/v1/auth/login" -Body @{ email=$AdminEmail; password=$AdminPassword }
 $adminToken = $adminLogin.accessToken
 
 # 2. User Register

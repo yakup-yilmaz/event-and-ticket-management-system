@@ -28,6 +28,21 @@ public class JwtService {
     @Value("${application.security.jwt.expiration}")
     private long accessExpirationMs;
 
+    @jakarta.annotation.PostConstruct
+    public void validateSecretKey() {
+        if (secretKey == null || secretKey.isBlank()) {
+            throw new IllegalStateException("Uygulama güvenliği için JWT_SECRET ortam değişkeni tanımlanmalıdır!");
+        }
+        try {
+            byte[] keyBytes = Decoders.BASE64.decode(secretKey);
+            if (keyBytes.length < 32) {
+                throw new IllegalStateException("JWT_SECRET anahtarı en az 256-bit (32 byte) uzunluğunda olmalıdır!");
+            }
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalStateException("JWT_SECRET geçerli bir Base64 formatında olmalıdır!", ex);
+        }
+    }
+
     public String generateAccessToken(UserPrincipal principal) {
         String jti = UUID.randomUUID().toString();
         Instant now = Instant.now();

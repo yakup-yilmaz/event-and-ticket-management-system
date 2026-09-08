@@ -282,11 +282,13 @@ public class EventServiceImpl implements EventService {
     }
 
     private void validateFullUpdate(EventUpdateRequest request) {
-        if (request.getName() == null || request.getDescription() == null
+        if (request.getName() == null || request.getName().isBlank()
+                || request.getDescription() == null || request.getDescription().isBlank()
                 || request.getEventDate() == null || request.getBasePrice() == null
                 || request.getTotalSeats() == null || request.getPricingType() == null) {
             throw new com.example.ticketsystem.exception.BusinessException(
-                    "PUT isteğinde tüm etkinlik alanları belirtilmelidir");
+                    "VALIDATION_ERROR",
+                    "PUT isteğinde tüm etkinlik alanları eksiksiz ve boş olmayacak şekilde belirtilmelidir");
         }
     }
 

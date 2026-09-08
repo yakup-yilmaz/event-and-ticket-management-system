@@ -52,15 +52,15 @@ public class TicketServiceImpl implements TicketService {
                 .orElseThrow(() -> new ResourceNotFoundException("Etkinlik bulunamadi ID: " + request.getEventId()));
 
         if (event.getStatus() != EventStatus.ACTIVE) {
-            throw new BusinessException("Bu etkinlik satis yapmak icin aktif durumda degil!");
+            throw new BusinessException("EVENT_NOT_ACTIVE", "Bu etkinlik satis yapmak icin aktif durumda degil!");
         }
 
         if (!event.getEventDate().isAfter(LocalDateTime.now())) {
-            throw new BusinessException("Tarihi geçmiş etkinlik için bilet satışı yapılamaz!");
+            throw new BusinessException("EVENT_PASSED", "Tarihi geçmiş etkinlik için bilet satışı yapılamaz!");
         }
 
         if (event.getAvailableSeats() <= 0) {
-            throw new BusinessException("Mevcut etkinlikte bos koltuk kalmamistir!");
+            throw new BusinessException("EVENT_SOLD_OUT", "Mevcut etkinlikte bos koltuk kalmamistir!");
         }
 
         BigDecimal finalPrice = pricingStrategyFactory
@@ -136,22 +136,23 @@ public class TicketServiceImpl implements TicketService {
         assertTicketAccess(ticket.getUser().getId());
 
         if (ticket.getStatus() == TicketStatus.CANCELLED) {
-            throw new BusinessException("Bu bilet zaten iptal edilmis!");
+            throw new BusinessException("TICKET_ALREADY_CANCELLED", "Bu bilet zaten iptal edilmis!");
         }
 
         Event event = eventRepository.findByIdWithLock(ticket.getEvent().getId())
-                .orElseThrow(() -> new BusinessException("Etkinlik bulunamadı"));
+                .orElseThrow(() -> new BusinessException("EVENT_NOT_FOUND", "Etkinlik bulunamadı"));
 
         if (event.getStatus() == EventStatus.CANCELLED) {
-            throw new BusinessException("İptal edilmiş etkinlikte bilet iptali yapılamaz!");
+            throw new BusinessException("EVENT_CANCELLED", "İptal edilmiş etkinlikte bilet iptali yapılamaz!");
         }
 
         if (event.getStatus() == EventStatus.PASSED
                 || !event.getEventDate().isAfter(LocalDateTime.now())) {
-            throw new BusinessException("Geçmiş etkinlik bileti iptal edilemez!");
+            throw new BusinessException("EVENT_PASSED", "Geçmiş etkinlik bileti iptal edilemez!");
         }
 
         ticket.setStatus(TicketStatus.CANCELLED);
+        ticket.setSeatNumber(ticket.getSeatNumber() + "-CANCELLED-" + ticket.getId());
         ticketRepository.save(ticket);
 
 

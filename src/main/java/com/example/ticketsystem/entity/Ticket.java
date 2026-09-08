@@ -31,6 +31,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @Data
 @Table(name = "tickets",
+        uniqueConstraints = {
+            @UniqueConstraint(name = "uk_ticket_event_seat", columnNames = {"event_id", "seat_number"})
+        },
         indexes = {
             @Index(name = "idx_ticket_user", columnList = "user_id"),
             @Index(name = "idx_ticket_event", columnList = "event_id"),
@@ -55,7 +58,7 @@ public class Ticket {
     @Column(name = "ticket_code", nullable = false, unique = true, length = 50)
     private String ticketCode;
 
-    @Column(name = "seat_number", nullable = false, length = 20)
+    @Column(name = "seat_number", nullable = false, length = 50)
     private String seatNumber;
 
     @Column(name = "price_paid", nullable = false, precision = 10, scale = 2)

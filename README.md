@@ -34,9 +34,7 @@ Standart CRUD işlemlerinin ötesine geçerek; **Veri tutarlılığı**, **Dinam
 
 ---
 
-## 📦 Kurulum ve Çalıştırma (1-Click Setup)
-
-Docker entegrasyonu sayesinde ekstra bir veritabanı kurmanıza gerek yoktur.
+## 📦 Kurulum ve Çalıştırma (Setup & Run)
 
 ### 1. Klonlama ve Ayarlar
 ```bash
@@ -44,15 +42,33 @@ git clone https://github.com/KULLANICI_ADINIZ/ticketsystem.git
 cd ticketsystem
 cp .env.example .env
 ```
-### 2. Başlatma
-Aşağıdaki komutları sırasıyla çalıştırın:
+> **Önemli Güvenlik Notu:** Production ortamına çıkarken `.env` dosyasındaki `JWT_SECRET`, `ADMIN_PASSWORD` ve veritabanı şifrelerini güçlü ve benzersiz değerlerle değiştirin.
+
+---
+
+### 2. Çalıştırma Seçenekleri
+
+#### Seçenek A: Tamamen Docker ile Çalıştırma (Önerilen)
+Tüm servisler (PostgreSQL ve Spring Boot uygulaması) Docker üzerinde ayağa kalkar:
 ```bash
-docker-compose up -d
+docker compose up --build
+```
+
+#### Seçenek B: Yerel Geliştirme Modu (Sadece DB Docker'da, Uygulama Yerel)
+Yalnızca veritabanını Docker'da başlatıp uygulamayı yerel makinenizde çalıştırabilirsiniz:
+```bash
+# 1. Yalnızca PostgreSQL'i başlatın:
+docker compose up -d postgres
+
+# 2. Spring Boot uygulamasını başlatın:
 ./mvnw spring-boot:run
 ```
 
+---
+
+### 3. API Dokümantasyonu (Swagger)
 Proje başarıyla başladığında **Swagger API Dokümantasyonuna** şu adresten ulaşabilirsiniz:
-👉 **[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)**
+👉 **[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)**
 
 ---
 

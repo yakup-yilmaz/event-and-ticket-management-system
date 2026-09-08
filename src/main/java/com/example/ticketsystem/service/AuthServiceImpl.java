@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("Kayıt isteği alındı");
 
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new BusinessException("Bu email adresi ile kayitli bir kullanici zaten var!");
+            throw new BusinessException("DUPLICATE_EMAIL", "Bu email adresi ile kayitli bir kullanici zaten var!");
         }
 
         User user = userMapper.toEntity(request);
@@ -78,7 +78,7 @@ public class AuthServiceImpl implements AuthService {
         );
 
         User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new BusinessException("Geçersiz kimlik bilgileri"));
+                .orElseThrow(() -> new BusinessException("INVALID_CREDENTIALS", "Geçersiz kimlik bilgileri"));
 
         // Süresi dolmuş refresh kayıtlarını temizle (geçerli olanlara dokunulmaz)
         refreshTokenRepository.deleteExpiredByUser(user, LocalDateTime.now());
@@ -96,17 +96,17 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse refresh(RefreshTokenRequest request) {
         String tokenHash = hashToken(request.getRefreshToken());
         RefreshToken stored = refreshTokenRepository.findByTokenHash(tokenHash)
-                .orElseThrow(() -> new BusinessException("Geçersiz refresh token"));
+                .orElseThrow(() -> new BusinessException("INVALID_REFRESH_TOKEN", "Geçersiz refresh token"));
 
         if (stored.isRevoked()) {
             refreshTokenRepository.revokeAllActiveByUser(stored.getUser(), LocalDateTime.now());
             log.warn("Revoked refresh token kullanımı tespit edildi (Güvenlik İhlali). User ID: {}",
                     stored.getUser().getId());
-            throw new BusinessException("Güvenlik ihlali tespit edildi, tüm oturumlarınız kapatıldı. Lütfen tekrar giriş yapın.");
+            throw new BusinessException("TOKEN_REUSE_DETECTED", "Güvenlik ihlali tespit edildi, tüm oturumlarınız kapatıldı. Lütfen tekrar giriş yapın.");
         }
         
         if (stored.isExpired()) {
-            throw new BusinessException("Refresh token süresi dolmuş. Lütfen tekrar giriş yapın.");
+            throw new BusinessException("REFRESH_TOKEN_EXPIRED", "Refresh token süresi dolmuş. Lütfen tekrar giriş yapın.");
         }
 
         User user = stored.getUser();

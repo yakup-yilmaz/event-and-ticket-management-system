@@ -32,6 +32,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
+                .code("VALIDATION_ERROR")
                 .message("Validasyon hatası oluştu")
                 .timestamp(LocalDateTime.now())
                 .validationErrors(errors)
@@ -44,6 +45,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.NOT_FOUND.value())
+                .code("RESOURCE_NOT_FOUND")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -54,6 +56,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
+                .code(ex.getCode() != null ? ex.getCode() : "BUSINESS_ERROR")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -64,6 +67,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTooManyRequests(TooManyRequestsException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.TOO_MANY_REQUESTS.value())
+                .code("RATE_LIMIT_EXCEEDED")
                 .message(ex.getMessage())
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -74,7 +78,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleOptimisticLocking(OptimisticLockingFailureException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.CONFLICT.value())
-                .message("Aynı anda birden fazla satın alma işlemi gerceklesti.Lutfen tekrar deneyin")
+                .code("CONCURRENT_UPDATE_CONFLICT")
+                .message("Aynı anda birden fazla işlem gerçekleşti. Lütfen tekrar deneyin")
                 .timestamp(LocalDateTime.now())
                 .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
@@ -84,7 +89,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.CONFLICT.value())
-                .message("İstek mevcut veri kısıtlarıyla çakışıyor")
+                .code("DATA_INTEGRITY_VIOLATION")
+                .message("İşlem veritabanı kısıtlarıyla çakıştı (Örn: Koltuk zaten alınmış veya benzersiz alan çakışması)")
                 .timestamp(LocalDateTime.now())
                 .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
@@ -94,6 +100,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMalformedRequest(Exception ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
+                .code("MALFORMED_REQUEST")
                 .message("İstek gövdesi veya parametreleri geçersiz")
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -104,6 +111,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.FORBIDDEN.value())
+                .code("ACCESS_DENIED")
                 .message(ex.getMessage() != null ? ex.getMessage() : "Bu işlem için yetkiniz yok")
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -114,6 +122,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.UNAUTHORIZED.value())
+                .code("UNAUTHORIZED")
                 .message("Kimlik doğrulama başarısız")
                 .timestamp(LocalDateTime.now())
                 .build();
@@ -126,6 +135,7 @@ public class GlobalExceptionHandler {
         log.error("Beklenmeyen sunucu hatası [errorId: {}]: ", errorId, ex);
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .code("INTERNAL_SERVER_ERROR")
                 .message("Beklenmeyen bir sunucu hatası oluştu. Referans Kodu: " + errorId)
                 .timestamp(LocalDateTime.now())
                 .build();
