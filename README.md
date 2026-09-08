@@ -49,6 +49,8 @@ Copy-Item .env.example .env
 ```
 > **Önemli Güvenlik Notu:** Production ortamına çıkarken `.env` dosyasındaki `JWT_SECRET`, `ADMIN_PASSWORD` ve veritabanı şifrelerini güçlü ve benzersiz değerlerle değiştirin.
 
+> **⚠️ Local Geliştirme Parolası:** `.env.example` içindeki `ADMIN_PASSWORD=ChangeMe123!` değeri **yalnızca yerel geliştirme ortamı içindir**. Uygulama başlangıcında otomatik admin hesabı oluşturmak için kullanılır. Bu değer production'da reddedilir; production deployment için farklı, güçlü bir parola belirlemeniz zorunludur.
+
 ---
 
 ### 2. Çalıştırma Seçenekleri

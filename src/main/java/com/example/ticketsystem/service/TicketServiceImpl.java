@@ -130,21 +130,30 @@ public class TicketServiceImpl implements TicketService {
     @Override
     @Transactional
     public void cancelTicket(Long ticketId) {
+        // 1. Adım: Ticket üzerinde pessimistic write lock al.
         Ticket ticket = ticketRepository.findByIdWithLock(ticketId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bilet bulunamadi ID: " + ticketId));
 
         assertTicketAccess(ticket.getUser().getId());
 
+        // İlk idempotent kontrol: Kilit öncesi CANCELLED ise dur.
         if (ticket.getStatus() == TicketStatus.CANCELLED) {
             log.info("Bilet zaten iptal edilmiş durumda (idempotent). Ticket ID: {}", ticketId);
             return;
         }
 
+        // 2. Adım: Event üzerinde pessimistic write lock al.
+        // Her iki lock da alındıktan sonra ticket durumunu DB'den fresh oku.
+        // Böylece eşzamanlı bir istek bu ticket'ı zaten iptal etmişse (committed),
+        // bu transaction'da bunu görerek çift kapasite artışı önlenir.
         Event event = eventRepository.findByIdWithLock(ticket.getEvent().getId())
                 .orElseThrow(() -> new BusinessException("EVENT_NOT_FOUND", "Etkinlik bulunamadı"));
 
-        if (ticket.getStatus() == TicketStatus.CANCELLED) {
-            log.info("Bilet kilit sonrası iptal edilmiş görüldü (idempotent). Ticket ID: {}", ticketId);
+        // 3. Adım: Her iki lock alındıktan sonra ticket durumunu tekrar kontrol et (fresh DB read).
+        Ticket freshTicket = ticketRepository.findByIdWithLock(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bilet bulunamadi ID: " + ticketId));
+        if (freshTicket.getStatus() == TicketStatus.CANCELLED) {
+            log.info("Bilet her iki lock sonrası iptal edilmiş görüldü (idempotent). Ticket ID: {}", ticketId);
             return;
         }
 
@@ -157,11 +166,11 @@ public class TicketServiceImpl implements TicketService {
             throw new BusinessException("EVENT_PASSED", "Geçmiş etkinlik bileti iptal edilemez!");
         }
 
-        ticket.setStatus(TicketStatus.CANCELLED);
-        ticket.setSeatNumber(ticket.getSeatNumber() + "-CANCELLED-" + ticket.getId());
-        ticketRepository.save(ticket);
+        freshTicket.setStatus(TicketStatus.CANCELLED);
+        freshTicket.setSeatNumber(freshTicket.getSeatNumber() + "-CANCELLED-" + freshTicket.getId());
+        ticketRepository.save(freshTicket);
 
-        // Kapasite artırımı: Sınır kontrolü ile asla totalSeats aşılmayacak şekilde artırılır
+        // Kapasite artırımı: Sınır kontrolü ile asla totalSeats aşılmayacak şekilde artırılır.
         if (event.getAvailableSeats() < event.getTotalSeats()) {
             event.setAvailableSeats(event.getAvailableSeats() + 1);
         }
